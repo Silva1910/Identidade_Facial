@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "reconhecimento",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "reconhecimento (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "reconhecimento (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "reconhecimento (Flutter Pixel 5 API 34)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5554",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Flutter: Launch Emulator",
+            "request": "launch",
+            "type": "flutter",
+            "deviceId": "emulator-5554",
+            "program": "lib/main.dart"
+        }
+    ]
+}

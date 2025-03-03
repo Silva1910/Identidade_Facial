@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:F@tec123456@localhost:3306/Registro_Database"
+}
+
+model Empresa {
+  CNPJ        String   @id @db.VarChar(20)
+  NomeFantasia String   @db.VarChar(100)
+  CEP         String   @db.VarChar(8)
+  EstadoCidade String   @db.VarChar(100)
+  Bairro      String   @db.VarChar(50)
+  RuaAvenida  String   @db.VarChar(100)
+  Numero      String   @db.VarChar(10)
+  Complemento String?  @db.VarChar(50)
+  Responsavel String   @db.VarChar(100)
+  DataCriacao DateTime 
+  Senha       String   @db.VarChar(50)
+  IsAdm       Boolean @default(false)
+
+  Colaboradores colaborador[]
+}
+
+model colaborador {
+  Matricula     String   @unique @db.VarChar(36)
+  Nome          String   @db.VarChar(100)
+  CPF           String   @db.VarChar(11)
+  RG            String   @db.VarChar(15)
+  DataNascimento DateTime @db.Date
+  DataAdmissao  DateTime @db.Date
+  NIS           String   @db.VarChar(11)
+  CTPS          String   @db.VarChar(20)
+  CargaHoraria  Int
+  Cargo         String   @db.VarChar(40)
+  CNPJ          String   @db.VarChar(14)
+ imagem         Bytes? @db.MediumBlob
+  Senha         String   @db.VarChar(50)
+  IsAdm         Boolean
+  Empresa     Empresa     @relation(fields: [CNPJ], references: [CNPJ])
+  registroponto registroponto[] 
+  @@id([CNPJ, Matricula]) 
+  
+}
+
+model registroponto {
+  Dia       DateTime
+  Matricula String   @db.VarChar(36)
+  Registro  Json
+
+  Colaborador colaborador @relation(fields: [Matricula], references: [Matricula])
+
+  @@id([Dia, Matricula]) // Chave primária composta
+}
