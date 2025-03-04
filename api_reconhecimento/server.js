@@ -112,13 +112,12 @@ app.get('/colaboradores/:cnpj/:matricula', async (req, res) => {
       return res.status(404).json({ message: 'Colaborador não encontrado' });
     }
 
-    // Converte a imagem (BLOB) para base64
+    // Converte a imagem (BLOB) para Base64, garantindo que seja um Buffer antes
     const colaboradorComImagem = {
       ...colaborador,
-      imagem: colaborador.imagem ? colaborador.imagem.toString('base64') : null,
+      imagem: colaborador.imagem ? Buffer.from(colaborador.imagem).toString('base64') : null,
     };
 
-    // Retorna os dados do colaborador com a imagem em base64
     res.status(200).json(colaboradorComImagem);
   } catch (error) {
     console.error('Erro ao buscar colaborador:', error);
