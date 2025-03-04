@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:image/image.dart' as img;
 import 'dart:convert';
-import 'package:path_provider/path_provider.dart';
 
 class AtualizarColaboradorpage extends StatefulWidget {
   final String cnpj;
@@ -21,13 +20,15 @@ class AtualizarColaboradorpage extends StatefulWidget {
   const AtualizarColaboradorpage({required this.matricula, required this.cnpj});
 
   @override
-  State<AtualizarColaboradorpage> createState() => _AtualizarColaboradorpageState();
+  State<AtualizarColaboradorpage> createState() =>
+      _AtualizarColaboradorpageState();
 }
 
 Future<File> compressImage(File file) async {
   final image = img.decodeImage(await file.readAsBytes());
   final resized = img.copyResize(image!, width: 800); // Redimensiona para 800px
-  final compressed = File(file.path)..writeAsBytesSync(img.encodeJpg(resized, quality: 85));
+  final compressed = File(file.path)
+    ..writeAsBytesSync(img.encodeJpg(resized, quality: 85));
   return compressed;
 }
 
@@ -37,7 +38,8 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
 
   final cpfController = MaskedTextController(mask: '000.000.000-00');
   final rgController = MaskedTextController(mask: '00.000.000-0');
-  final TextEditingController _dataNascimentoController = TextEditingController();
+  final TextEditingController _dataNascimentoController =
+      TextEditingController();
   final TextEditingController _dataAdmissaoController = TextEditingController();
   final TextEditingController nomeController = TextEditingController();
   final TextEditingController cargaHorariaController = TextEditingController();
@@ -147,14 +149,21 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
         cargoController.text.isEmpty ||
         _senhaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Todos os campos obrigatórios devem ser preenchidos.'), duration: Duration(seconds: 2)),
+        SnackBar(
+            content:
+                Text('Todos os campos obrigatórios devem ser preenchidos.'),
+            duration: Duration(seconds: 2)),
       );
       return;
     }
 
-    if (!kIsWeb && _imagemSelecionada == null || (kIsWeb && _imagemSelecionadaWeb == null)) {
+    if (!kIsWeb && _imagemSelecionada == null ||
+        (kIsWeb && _imagemSelecionadaWeb == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, selecione uma imagem antes de cadastrar.'), duration: Duration(seconds: 2)),
+        SnackBar(
+            content:
+                Text('Por favor, selecione uma imagem antes de cadastrar.'),
+            duration: Duration(seconds: 2)),
       );
       return;
     }
@@ -164,10 +173,13 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
 
     request.fields['Matricula'] = matriculaController.text;
     request.fields['Nome'] = nomeController.text;
-    request.fields['CPF'] = cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    request.fields['CPF'] =
+        cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
     request.fields['RG'] = rgController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    request.fields['DataNascimento'] = _formatarDataParaISO(_dataNascimentoController.text);
-    request.fields['DataAdmissao'] = _formatarDataParaISO(_dataAdmissaoController.text);
+    request.fields['DataNascimento'] =
+        _formatarDataParaISO(_dataNascimentoController.text);
+    request.fields['DataAdmissao'] =
+        _formatarDataParaISO(_dataAdmissaoController.text);
     request.fields['NIS'] = nisController.text;
     request.fields['CTPS'] = ctpsController.text;
     request.fields['CargaHoraria'] = cargaHoraria.toString();
@@ -202,7 +214,9 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Colaborador atualizado com sucesso!'), duration: Duration(seconds: 2)),
+          SnackBar(
+              content: Text('Colaborador atualizado com sucesso!'),
+              duration: Duration(seconds: 2)),
         );
         nomeController.clear();
         cpfController.clear();
@@ -220,17 +234,22 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao cadastrar: $responseBody'), duration: Duration(seconds: 2)),
+          SnackBar(
+              content: Text('Erro ao cadastrar: $responseBody'),
+              duration: Duration(seconds: 2)),
         );
       }
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao conectar com a API: $error'), duration: Duration(seconds: 2)),
+        SnackBar(
+            content: Text('Erro ao conectar com a API: $error'),
+            duration: Duration(seconds: 2)),
       );
     }
   }
 
-  Future<void> _selecionarData(BuildContext context, TextEditingController controller) async {
+  Future<void> _selecionarData(
+      BuildContext context, TextEditingController controller) async {
     DateTime? dataSelecionada = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -258,68 +277,75 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
     super.initState();
     _carregarDadosColaborador(); // Busca os dados da empresa
   }
-Future<void> _carregarDadosColaborador() async {
-  try {
-    final colaboradorData = await fetchColaborador(widget.cnpj, widget.matricula);
+  Future<void> _carregarDadosColaborador() async {
+    try {
+      final colaboradorData =
+          await fetchColaborador(widget.cnpj, widget.matricula);
 
-    setState(() {
-      nomeController.text = colaboradorData['Nome'] ?? '';
-      cpfController.text = colaboradorData['CPF'] ?? '';
-      rgController.text = colaboradorData['RG'] ?? '';
-      _dataNascimentoController.text = colaboradorData['DataNascimento'] != null
-          ? DateFormat('dd/MM/yyyy').format(DateTime.parse(colaboradorData['DataNascimento']))
-          : '';
-      _dataAdmissaoController.text = colaboradorData['DataAdmissao'] != null
-          ? DateFormat('dd/MM/yyyy').format(DateTime.parse(colaboradorData['DataAdmissao']))
-          : '';
-      cargaHorariaController.text = colaboradorData['CargaHoraria']?.toString() ?? '';
-      ctpsController.text = colaboradorData['CTPS'] ?? '';
-      matriculaController.text = colaboradorData['Matricula'] ?? '';
-      cargoController.text = colaboradorData['Cargo'] ?? '';
-      nisController.text = colaboradorData['NIS'] ?? '';
-      _senhaController.text = colaboradorData['Senha'] ?? '';
-      
+      setState(() {
+        nomeController.text = colaboradorData['Nome'] ?? '';
+        cpfController.text = colaboradorData['CPF'] ?? '';
+        rgController.text = colaboradorData['RG'] ?? '';
+        _dataNascimentoController.text =
+            colaboradorData['DataNascimento'] != null
+                ? DateFormat('dd/MM/yyyy')
+                    .format(DateTime.parse(colaboradorData['DataNascimento']))
+                : '';
+        _dataAdmissaoController.text = colaboradorData['DataAdmissao'] != null
+            ? DateFormat('dd/MM/yyyy')
+                .format(DateTime.parse(colaboradorData['DataAdmissao']))
+            : '';
+        cargaHorariaController.text =
+            colaboradorData['CargaHoraria']?.toString() ?? '';
+        ctpsController.text = colaboradorData['CTPS'] ?? '';
+        matriculaController.text = colaboradorData['Matricula'] ?? '';
+        cargoController.text = colaboradorData['Cargo'] ?? '';
+        nisController.text = colaboradorData['NIS'] ?? '';
+        _senhaController.text = colaboradorData['Senha'] ?? '';
+
+        // Se a API retorna a imagem em base64, convertemos para Uint8List
+        if (colaboradorData['imagem'] != null && colaboradorData['imagem'] is String) {
+          _imagemBytes = base64Decode(colaboradorData['imagem']);
+        } else {
+          _imagemBytes = null;
+        }
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+
+  Future<Map<String, dynamic>> fetchColaborador(
+      String cnpj, String matricula) async {
+    final url =
+        Uri.parse("http://localhost:3000/colaboradores/$cnpj/$matricula");
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
       // Verifique se a imagem está presente e é uma string base64
-      if (colaboradorData['imagem'] != null && colaboradorData['imagem'] is String) {
-        print("Imagem recebida: ${colaboradorData['imagem'].substring(0, 50)}..."); // Log parcial da imagem
-        _imagemBytes = base64Decode(colaboradorData['imagem']);
-        print("Imagem decodificada com sucesso!");
-      } else {
-        print("Nenhuma imagem recebida ou formato inválido.");
-        _imagemBytes = null;
+      if (data['imagem'] != null && data['imagem'] is String) {
+        print(
+            "Imagem recebida da API: ${data['imagem'].substring(0, 50)}..."); // Log parcial da imagem
       }
 
-      _isLoading = false; // Finaliza o carregamento
-    });
-  } catch (e) {
-    setState(() {
-      _isLoading = false; // Finaliza o carregamento mesmo em caso de erro
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
-  }
-}
-
-Future<Map<String, dynamic>> fetchColaborador(String cnpj, String matricula) async {
-  final url = Uri.parse("http://localhost:3000/colaboradores/$cnpj/$matricula");
-  final response = await http.get(url);
-
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-
-    // Verifique se a imagem está presente e é uma string base64
-    if (data['imagem'] != null && data['imagem'] is String) {
-      print("Imagem recebida da API: ${data['imagem'].substring(0, 50)}..."); // Log parcial da imagem
+      return data;
+    } else if (response.statusCode == 404) {
+      throw Exception('Colaborador não encontrado');
+    } else {
+      throw Exception('Erro ao buscar colaborador');
     }
-
-    return data;
-  } else if (response.statusCode == 404) {
-    throw Exception('Colaborador não encontrado');
-  } else {
-    throw Exception('Erro ao buscar colaborador');
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -330,514 +356,518 @@ Future<Map<String, dynamic>> fetchColaborador(String cnpj, String matricula) asy
               style: TextStyle(color: Colors.white)),
           backgroundColor: const Color.fromARGB(255, 30, 112, 243),
         ),
-
-             body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(), // Indicador de carregamento
-            )
-          : SingleChildScrollView(
-          child: Center(
-            child: Column(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: Container(
-                        margin: const EdgeInsets.all(8.0),
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 255, 255, 255),
-                          borderRadius: BorderRadius.circular(12.0),
-                          border: Border.all(
-                            color: const Color.fromARGB(255, 4, 47, 115),
-                            width: 2.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color.fromARGB(255, 2, 44, 79)
-                                  .withOpacity(0.8),
-                              offset: const Offset(0, 6),
-                              blurRadius: 15,
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(child: Container()),
-                                Expanded(
-                                  flex: 8,
-                                  child: Column(
+        body: _isLoading
+            ? Center(
+                child: CircularProgressIndicator(), // Indicador de carregamento
+              )
+            : SingleChildScrollView(
+                child: Center(
+                  child: Column(
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: Container(
+                              margin: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: const Color.fromARGB(255, 255, 255, 255),
+                                borderRadius: BorderRadius.circular(12.0),
+                                border: Border.all(
+                                  color: const Color.fromARGB(255, 4, 47, 115),
+                                  width: 2.0,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color.fromARGB(255, 2, 44, 79)
+                                        .withOpacity(0.8),
+                                    offset: const Offset(0, 6),
+                                    blurRadius: 15,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
                                     children: [
-                                    GestureDetector(
-  onTap: _selecionarImagem,
-  child: Container(
-    width: 200,
-    height: 200,
-    decoration: BoxDecoration(
-      color: Colors.grey[300],
-      shape: BoxShape.circle,
-    ),
-    child: _imagemBytes != null
-        ? ClipOval(
-            child: Image.memory(
-              _imagemBytes!,
-              fit: BoxFit.cover,
-              width: 200,
-              height: 200,
-            ),
-          )
-        : Icon(
-            Icons.add_a_photo,
-            color: const Color.fromARGB(255, 0, 0, 0),
-            size: 50,
-          ),
-  ),
-),  SizedBox(height: 8),
+                                      Expanded(child: Container()),
+                                      Expanded(
+                                        flex: 8,
+                                        child: Column(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: _selecionarImagem,
+                                              child: Container(
+                                                width: 200,
+                                                height: 200,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[300],
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: _imagemBytes != null
+                                                    ? ClipOval(
+                                                        child: Image.memory(
+                                                          _imagemBytes!,
+                                                          fit: BoxFit.cover,
+                                                          width: 200,
+                                                          height: 200,
+                                                        ),
+                                                      )
+                                                    : Icon(
+                                                        Icons.add_a_photo,
+                                                        color: Colors.black,
+                                                        size: 50,
+                                                      ),
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              "Clique para adicionar uma imagem",
+                                              style: TextStyle(
+                                                  color: const Color.fromARGB(
+                                                      255, 0, 0, 0)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(child: Container()),
+                                    ],
+                                  ),
+                                  SizedBox(height: 20),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Nome: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: nomeController,
+                                          style: TextStyle(color: Colors.black),
+                                          inputFormatters: [
+                                            LengthLimitingTextInputFormatter(
+                                                50),
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Nome',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("CPF: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: cpfController,
+                                          style: TextStyle(color: Colors.black),
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            labelText: 'CPF',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Data Nasc: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _dataNascimentoController,
+                                          readOnly: true,
+                                          onTap: () => _selecionarData(context,
+                                              _dataNascimentoController),
+                                          style: TextStyle(color: Colors.black),
+                                          decoration: InputDecoration(
+                                            labelText: 'Data de Nascimento',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("RG: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: rgController,
+                                          style: TextStyle(color: Colors.black),
+                                          decoration: InputDecoration(
+                                            labelText: 'RG',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Matricula: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: matriculaController,
+                                          style: TextStyle(color: Colors.black),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly, // Apenas números
+                                            LengthLimitingTextInputFormatter(
+                                                50), // Limite de 50 caracteres
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Matricula',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("CTPS: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: ctpsController,
+                                          style: TextStyle(color: Colors.black),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly, // Apenas números
+                                            LengthLimitingTextInputFormatter(
+                                                50), // Limite de 50 caracteres
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'CTPS',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("NIS: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: nisController,
+                                          style: TextStyle(color: Colors.black),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly, // Apenas números
+                                            LengthLimitingTextInputFormatter(
+                                                50), // Limite de 50 caracteres
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'NIS',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Carga Horaria: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: cargaHorariaController,
+                                          style: TextStyle(color: Colors.black),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly, // Apenas números
+                                            LengthLimitingTextInputFormatter(
+                                                50), // Limite de 50 caracteres
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Carga Horaria',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Cargo: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: cargoController,
+                                          style: TextStyle(color: Colors.black),
+                                          inputFormatters: [
+                                            LengthLimitingTextInputFormatter(
+                                                50),
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Cargo',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ], //children
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Data de Admissão: ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _dataAdmissaoController,
+                                          readOnly: true,
+                                          onTap: () => _selecionarData(
+                                              context, _dataAdmissaoController),
+                                          style: TextStyle(color: Colors.black),
+                                          decoration: InputDecoration(
+                                            labelText: 'Data de Admissão',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text("Senha : ",
+                                          style: GoogleFonts.roboto(
+                                              color: Colors.black,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _senhaController,
+                                          style: TextStyle(color: Colors.black),
+                                          inputFormatters: [
+                                            LengthLimitingTextInputFormatter(
+                                                50),
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Senha do colaborador',
+                                            labelStyle:
+                                                TextStyle(color: Colors.black),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.blue),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
                                       Text(
-                                        "Clique para adicionar uma imagem",
-                                        style: TextStyle(
-                                            color: const Color.fromARGB(
-                                                255, 0, 0, 0)),
+                                        "Administrador: ",
+                                        style: GoogleFonts.roboto(
+                                          color: Colors.black,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
+                                      Checkbox(
+                                        value: _isAdm,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            _isAdm = value ?? false;
+                                          });
+                                        },
+                                      ),
+                                      Text(_isAdm
+                                          ? "Sim"
+                                          : "Não"), // Texto dinâmico ao lado do checkbox
                                     ],
                                   ),
-                                ),
-                                Expanded(child: Container()),
-                              ],
+                                ],
+                              ),
                             ),
-                            SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Nome: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: nomeController,
-                                    style: TextStyle(color: Colors.black),
-                                    inputFormatters: [
-                                      LengthLimitingTextInputFormatter(50),
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Nome',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: ElevatedButton(
+                          onPressed: _Atualizar,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 3, 33, 255),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 15),
+                          ),
+                          child: Text(
+                            'Atualizar',
+                            style: GoogleFonts.roboto(
+                              color: const Color.fromARGB(255, 255, 255, 255),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("CPF: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: cpfController,
-                                    style: TextStyle(color: Colors.black),
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      labelText: 'CPF',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Data Nasc: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _dataNascimentoController,
-                                    readOnly: true,
-                                    onTap: () => _selecionarData(
-                                        context, _dataNascimentoController),
-                                    style: TextStyle(color: Colors.black),
-                                    decoration: InputDecoration(
-                                      labelText: 'Data de Nascimento',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("RG: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: rgController,
-                                    style: TextStyle(color: Colors.black),
-                                    decoration: InputDecoration(
-                                      labelText: 'RG',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Matricula: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: matriculaController,
-                                    style: TextStyle(color: Colors.black),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .digitsOnly, // Apenas números
-                                      LengthLimitingTextInputFormatter(
-                                          50), // Limite de 50 caracteres
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Matricula',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("CTPS: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: ctpsController,
-                                    style: TextStyle(color: Colors.black),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .digitsOnly, // Apenas números
-                                      LengthLimitingTextInputFormatter(
-                                          50), // Limite de 50 caracteres
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'CTPS',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("NIS: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: nisController,
-                                    style: TextStyle(color: Colors.black),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .digitsOnly, // Apenas números
-                                      LengthLimitingTextInputFormatter(
-                                          50), // Limite de 50 caracteres
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'NIS',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Carga Horaria: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: cargaHorariaController,
-                                    style: TextStyle(color: Colors.black),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter
-                                          .digitsOnly, // Apenas números
-                                      LengthLimitingTextInputFormatter(
-                                          50), // Limite de 50 caracteres
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Carga Horaria',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Cargo: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: cargoController,
-                                    style: TextStyle(color: Colors.black),
-                                    inputFormatters: [
-                                      LengthLimitingTextInputFormatter(50),
-                                    ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Cargo',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ], //children
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Data de Admissão: ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _dataAdmissaoController,
-                                    readOnly: true,
-                                    onTap: () => _selecionarData(
-                                        context, _dataAdmissaoController),
-                                    style: TextStyle(color: Colors.black),
-                                    decoration: InputDecoration(
-                                      labelText: 'Data de Admissão',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text("Senha : ",
-                                    style: GoogleFonts.roboto(
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700)),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _senhaController,
-                                    style: TextStyle(color: Colors.black),
-                                      inputFormatters: [
-                                      LengthLimitingTextInputFormatter(50),
-                                      ],
-                                    decoration: InputDecoration(
-                                      labelText: 'Senha do colaborador',
-                                      labelStyle:
-                                          TextStyle(color: Colors.black),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.black),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.blue),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Administrador: ",
-                                  style: GoogleFonts.roboto(
-                                    color: Colors.black,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Checkbox(
-                                  value: _isAdm,
-                                  onChanged: (bool? value) {
-                                    setState(() {
-                                      _isAdm = value ?? false;
-                                    });
-                                  },
-                                ),
-                                Text(_isAdm
-                                    ? "Sim"
-                                    : "Não"), // Texto dinâmico ao lado do checkbox
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton(
-                    onPressed: _Atualizar,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 3, 33, 255),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                    ),
-                    child: Text(
-                      'Atualizar',
-                      style: GoogleFonts.roboto(
-                        color: const Color.fromARGB(255, 255, 255, 255),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

@@ -79,8 +79,8 @@ bool loading = true;
   }
 
 
-  void _redirecionarPerfil(BuildContext context, String matricula) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) => PerfilPage(matricula: matricula)));
+  void _redirecionarPerfil(BuildContext context, String matricula, String cnpj) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) => PerfilPage(matricula: matricula, cnpj: cnpj)));
   }
 
 void _redirecionarCadastro(BuildContext context, String matricula, String cnpj) {
@@ -206,7 +206,7 @@ void _mostrarDialogoResetSenha(BuildContext context, String matricula) {
         } else if (value == 'Alterar_Dados') {
           _redirecionarCadastro(context, matricula, cnpj);
         }else if (value == 'Perfil_Colaborador') {
-          _redirecionarPerfil(context, matricula);
+          _redirecionarPerfil(context, matricula, cnpj);
         }
       },
       itemBuilder: (BuildContext context) {
