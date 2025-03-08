@@ -7,6 +7,7 @@ import 'package:reconhecimento/pages/login_page.dart';
 import 'package:reconhecimento/pages/FaceDetectionCameraScreen.dart';
 import 'package:reconhecimento/pages/CalendarPage.dart';
 
+
 class MainPage extends StatefulWidget {
   final bool isAdm;
   const MainPage({super.key, required this.isAdm});

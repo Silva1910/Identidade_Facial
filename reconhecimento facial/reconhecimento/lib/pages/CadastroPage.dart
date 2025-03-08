@@ -5,12 +5,11 @@ import 'package:flutter/services.dart'; // Para formatação de texto
 import 'package:image_picker/image_picker.dart'; // Para selecionar imagens
 import 'dart:io'; // Para trabalhar com arquivos
 import 'package:flutter_image_compress/flutter_image_compress.dart'; // Para comprimir imagens
-import 'package:http/http.dart' as http; // Para enviar requisições HTTP
-import 'package:http_parser/http_parser.dart'; // Para definir o tipo de mídia
 import 'dart:typed_data'; // Para Uint8List
 import 'package:flutter/foundation.dart' show kIsWeb;
-
+import 'package:reconhecimento/utils/date_utils.dart';
 import 'package:image/image.dart' as img;
+import 'package:reconhecimento/service/colaboradorService.dart';
 
 class Cadastropage extends StatefulWidget {
   final String cnpj;
@@ -36,6 +35,7 @@ class _CadastropageState extends State<Cadastropage> {
   final rgController = MaskedTextController(mask: '00.000.000-0');
   final TextEditingController _dataNascimentoController =
       TextEditingController();
+ final ColaboradorService _colaboradorService = ColaboradorService('http://localhost:3000');
   final TextEditingController _dataAdmissaoController = TextEditingController();
   final TextEditingController nomeController = TextEditingController();
   final TextEditingController cargaHorariaController = TextEditingController();
@@ -48,13 +48,13 @@ class _CadastropageState extends State<Cadastropage> {
   File? _imagemSelecionada;
 
   Uint8List? _imagemSelecionadaWeb; // Para armazenar a imagem na web
+ 
   Future<void> _selecionarImagem() async {
-    print("Iniciando seleção de imagem...");
+   
     final ImagePicker picker = ImagePicker();
     final XFile? imagem = await picker.pickImage(source: ImageSource.gallery);
 
     if (imagem != null) {
-      print("Imagem selecionada: ${imagem.path}");
 
       if (kIsWeb) {
         // Para Flutter Web
@@ -62,13 +62,11 @@ class _CadastropageState extends State<Cadastropage> {
         setState(() {
           _imagemSelecionadaWeb = bytes;
         });
-        print("Imagem carregada na web: ${bytes.length} bytes");
       } else {
         // Para Mobile
         File imagemFile = File(imagem.path);
 
         if (await imagemFile.exists()) {
-          print("Arquivo da imagem existe: ${imagemFile.path}");
           File? imagemComprimida = await _comprimirImagem(imagemFile);
 
           setState(() {
@@ -77,7 +75,7 @@ class _CadastropageState extends State<Cadastropage> {
           });
 
           if (imagemComprimida != null) {
-            print("Imagem comprimida salva em: ${imagemComprimida.path}");
+          
           } else {
             print("Aviso: Usando a imagem original, pois a compressão falhou.");
           }
@@ -96,18 +94,9 @@ class _CadastropageState extends State<Cadastropage> {
     }
   }
 
-// Converte a data de "DD/MM/YYYY" para "YYYY-MM-DD"
-  String _formatarDataParaISO(String data) {
-    final partes = data.split('/');
-    if (partes.length == 3) {
-      return "${partes[2]}-${partes[1]}-${partes[0]}";
-    }
-    return data; // Retorna a data original se não puder ser formatada
-  }
-
   Future<File?> _comprimirImagem(File file) async {
     final caminhoComprimido = '${file.path}_comprimida.jpg';
-    print("Caminho da imagem comprimida: $caminhoComprimido");
+
 
     try {
       final result = await FlutterImageCompress.compressAndGetFile(
@@ -118,7 +107,7 @@ class _CadastropageState extends State<Cadastropage> {
       );
 
       if (result != null) {
-        print("Imagem comprimida salva em: ${result.path}");
+      
         return File(result.path);
       } else {
         print("Erro: A compressão retornou null.");
@@ -129,104 +118,6 @@ class _CadastropageState extends State<Cadastropage> {
       return null;
     }
   }
-Future<void> _cadastrar() async {
-  const String url = 'http://localhost:3000/colaboradores';
-  print("Iniciando processo de cadastro...");
-
-  if (nomeController.text.isEmpty ||
-      cpfController.text.isEmpty ||
-      rgController.text.isEmpty ||
-      _dataNascimentoController.text.isEmpty ||
-      _dataAdmissaoController.text.isEmpty ||
-      matriculaController.text.isEmpty ||
-      ctpsController.text.isEmpty ||
-      nisController.text.isEmpty ||
-      cargaHorariaController.text.isEmpty ||
-      cargoController.text.isEmpty ||
-      _senhaController.text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Todos os campos obrigatórios devem ser preenchidos.'), duration: Duration(seconds: 2)),
-    );
-    return;
-  }
-
-  if (!kIsWeb && _imagemSelecionada == null || (kIsWeb && _imagemSelecionadaWeb == null)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Por favor, selecione uma imagem antes de cadastrar.'), duration: Duration(seconds: 2)),
-    );
-    return;
-  }
-
-  int cargaHoraria = int.parse(cargaHorariaController.text);
-  var request = http.MultipartRequest('POST', Uri.parse(url));
-
-  request.fields['Matricula'] = matriculaController.text;
-  request.fields['Nome'] = nomeController.text;
-  request.fields['CPF'] = cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
-  request.fields['RG'] = rgController.text.replaceAll(RegExp(r'[^0-9]'), '');
-  request.fields['DataNascimento'] = _formatarDataParaISO(_dataNascimentoController.text);
-  request.fields['DataAdmissao'] = _formatarDataParaISO(_dataAdmissaoController.text);
-  request.fields['NIS'] = nisController.text;
-  request.fields['CTPS'] = ctpsController.text;
-  request.fields['CargaHoraria'] = cargaHoraria.toString();
-  request.fields['Cargo'] = cargoController.text;
-  request.fields['CNPJ'] = widget.cnpj;
-  request.fields['Senha'] = _senhaController.text;
-  request.fields['IsAdm'] = _isAdm.toString();
-
-  if (!kIsWeb) {
-    File compressedImage = await compressImage(_imagemSelecionada!);
-    var imagemFile = await http.MultipartFile.fromPath(
-      'imagem',
-      compressedImage.path,
-      filename: 'imagem.jpg',
-      contentType: MediaType('image', 'jpeg'),
-    );
-    request.files.add(imagemFile);
-  } else {
-    var imagemBytes = http.MultipartFile.fromBytes(
-      'imagem',
-      _imagemSelecionadaWeb!,
-      filename: 'imagem.jpg',
-      contentType: MediaType('image', 'jpeg'),
-    );
-    request.files.add(imagemBytes);
-  }
-
-  try {
-    var response = await request.send();
-    var responseBody = await response.stream.bytesToString();
-    print("Resposta do servidor: $responseBody");
-
-    if (response.statusCode == 201) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Colaborador cadastrado com sucesso!'), duration: Duration(seconds: 2)),
-      );
-      nomeController.clear();
-      cpfController.clear();
-      rgController.clear();
-      matriculaController.clear();
-      ctpsController.clear();
-      _dataNascimentoController.clear();
-      _dataAdmissaoController.clear();
-      nisController.clear();
-      cargoController.clear();
-      setState(() {
-        _imagemSelecionada = null;
-        _imagemSelecionadaWeb = null;
-        _isAdm = false;
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao cadastrar: $responseBody'), duration: Duration(seconds: 2)),
-      );
-    }
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erro ao conectar com a API: $error'), duration: Duration(seconds: 2)),
-    );
-  }
-}
 
   Future<void> _selecionarData(
       BuildContext context, TextEditingController controller) async {
@@ -251,6 +142,68 @@ Future<void> _cadastrar() async {
       });
     }
   }
+
+
+  Future<void> _cadastrar() async {
+    try {
+      // Prepara os campos
+      Map<String, String> campos = {
+        'Matricula': matriculaController.text,
+        'Nome': nomeController.text,
+        'CPF': cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'RG': rgController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'DataNascimento': DateUtilits.formatarDataParaISO(_dataNascimentoController.text),
+        'DataAdmissao': DateUtilits.formatarDataParaISO(_dataAdmissaoController.text),
+        'NIS': nisController.text,
+        'CTPS': ctpsController.text,
+        'CargaHoraria': cargaHorariaController.text,
+        'Cargo': cargoController.text,
+        'CNPJ': widget.cnpj,
+        'Senha': _senhaController.text,
+        'IsAdm': _isAdm.toString(),
+      };
+
+      // Obtém os bytes da imagem
+      Uint8List? imagemBytes = _imagemSelecionadaWeb ?? await _imagemSelecionada?.readAsBytes();
+
+      // Chama o método cadastrarColaborador
+      await _colaboradorService.cadastrarColaborador(
+        cnpj: widget.cnpj,
+        campos: campos,
+        imagemBytes: imagemBytes,
+        isAdm: _isAdm,
+      );
+
+      // Exibe uma mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Colaborador cadastrado com sucesso!')),
+      );
+
+      // Limpa os campos após o cadastro
+      nomeController.clear();
+      cpfController.clear();
+      rgController.clear();
+      matriculaController.clear();
+      ctpsController.clear();
+      _dataNascimentoController.clear();
+      _dataAdmissaoController.clear();
+      nisController.clear();
+      cargaHorariaController.clear();
+      cargoController.clear();
+      _senhaController.clear();
+      setState(() {
+        _imagemSelecionada = null;
+        _imagemSelecionadaWeb = null;
+        _isAdm = false;
+      });
+    } catch (e) {
+      // Exibe uma mensagem de erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao cadastrar colaborador: $e')),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {

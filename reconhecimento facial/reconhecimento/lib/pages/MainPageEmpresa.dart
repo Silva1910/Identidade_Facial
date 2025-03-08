@@ -8,7 +8,7 @@ import 'package:reconhecimento/pages/login_page.dart';
 
 class MainPageEmpresa extends StatefulWidget {
   final bool isAdm;
- final String cnpj; 
+  final String cnpj;
   const MainPageEmpresa({super.key, required this.isAdm, required this.cnpj});
 
   @override
@@ -74,8 +74,8 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  MainPageEmpresa(isAdm: widget.isAdm, cnpj: widget.cnpj),
+                              builder: (context) => MainPageEmpresa(
+                                  isAdm: widget.isAdm, cnpj: widget.cnpj),
                             ),
                           );
                         },
@@ -113,7 +113,8 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) =>  Cadastropage(cnpj: widget.cnpj),
+                                builder: (context) =>
+                                    Cadastropage(cnpj: widget.cnpj),
                               ),
                             );
                           },
@@ -131,7 +132,8 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) =>  RelacaoPage(cnpj: widget.cnpj),
+                                builder: (context) =>
+                                    RelacaoPage(cnpj: widget.cnpj),
                               ),
                             );
                           },
@@ -244,13 +246,15 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                             ),
                           ),
                           onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => Cadastropage(cnpj: widget.cnpj), // Use o nome do parâmetro
-    ),
-  );
-},
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => Cadastropage(
+                                    cnpj:
+                                        widget.cnpj), // Use o nome do parâmetro
+                              ),
+                            );
+                          },
                           child: Text(
                             "Cadastro",
                             style: GoogleFonts.roboto(
@@ -333,7 +337,8 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => RelacaoPage(cnpj: widget.cnpj)),
+                                  builder: (context) =>
+                                      RelacaoPage(cnpj: widget.cnpj)),
                             );
                           },
                           child: Text(
@@ -418,8 +423,8 @@ class MainPageEmpresaState extends State<MainPageEmpresa> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>   DadosEmpresaPage(cnpj: widget.cnpj)
-                              ),
+                                  builder: (context) =>
+                                      DadosEmpresaPage(cnpj: widget.cnpj)),
                             );
                           },
                           child: Text(

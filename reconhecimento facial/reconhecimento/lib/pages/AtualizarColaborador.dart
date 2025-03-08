@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart'; // Para fontes personalizadas
 import 'package:flutter/services.dart'; // Para formatação de texto
 import 'package:image_picker/image_picker.dart'; // Para selecionar imagens
 import 'dart:io'; // Para trabalhar com arquivos
-import 'package:flutter_image_compress/flutter_image_compress.dart'; // Para comprimir imagens
-import 'package:http/http.dart' as http; // Para enviar requisições HTTP
-import 'package:http_parser/http_parser.dart'; // Para definir o tipo de mídia
 import 'dart:typed_data'; // Para Uint8List
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:image/image.dart' as img;
 import 'dart:convert';
+import 'package:reconhecimento/service/colaboradorService.dart';
+import 'package:reconhecimento/utils/image_utils.dart';
+import 'package:reconhecimento/utils/date_utils.dart';
 
 class AtualizarColaboradorpage extends StatefulWidget {
   final String cnpj;
@@ -35,7 +35,7 @@ Future<File> compressImage(File file) async {
 class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
   bool _isAdm = false;
   bool _isLoading = true; // Para controlar o estado de carregamento
-
+  ColaboradorService _colaboradorService = ColaboradorService('http://localhost:3000');
   final cpfController = MaskedTextController(mask: '000.000.000-00');
   final rgController = MaskedTextController(mask: '00.000.000-0');
   final TextEditingController _dataNascimentoController =
@@ -74,7 +74,7 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
 
         if (await imagemFile.exists()) {
           print("Arquivo da imagem existe: ${imagemFile.path}");
-          File? imagemComprimida = await _comprimirImagem(imagemFile);
+          File? imagemComprimida = await ImageUtils.comprimirImagem(imagemFile);;
 
           setState(() {
             _imagemSelecionada = imagemComprimida ?? imagemFile;
@@ -100,153 +100,70 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
     }
   }
 
-  String _formatarDataParaISO(String data) {
-    final partes = data.split('/');
-    if (partes.length == 3) {
-      return "${partes[2]}-${partes[1]}-${partes[0]}";
-    }
-    return data; // Retorna a data original se não puder ser formatada
-  }
-
-  Future<File?> _comprimirImagem(File file) async {
-    final caminhoComprimido = '${file.path}_comprimida.jpg';
-    print("Caminho da imagem comprimida: $caminhoComprimido");
-
+  
+  Future<void> _updateColaborador() async {
     try {
-      final result = await FlutterImageCompress.compressAndGetFile(
-        file.absolute.path,
-        caminhoComprimido,
-        quality: 50, // Ajuste a qualidade conforme necessário
-        format: CompressFormat.jpeg,
+      // Prepara os campos
+      Map<String, String> campos = {
+        'Nome': nomeController.text,
+        'CPF': cpfController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'RG': rgController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'DataNascimento': DateUtilits.formatarDataParaISO(_dataNascimentoController.text),
+        'DataAdmissao': DateUtilits.formatarDataParaISO(_dataAdmissaoController.text),
+        'NIS': nisController.text,
+        'CTPS': ctpsController.text,
+        'CargaHoraria': cargaHorariaController.text,
+        'Cargo': cargoController.text,
+        'CNPJ': widget.cnpj,
+        'Senha': _senhaController.text,
+        'IsAdm': _isAdm.toString(),
+      };
+
+      // Obtém os bytes da imagem
+      Uint8List? imagemBytes = _imagemSelecionadaWeb ?? await _imagemSelecionada?.readAsBytes();
+
+      // Chama o método atualizarColaborador
+      await _colaboradorService.atualizarColaborador(
+        cnpj: widget.cnpj,
+        matricula: widget.matricula,
+        campos: campos,
+        imagemBytes: imagemBytes,
       );
 
-      if (result != null) {
-        print("Imagem comprimida salva em: ${result.path}");
-        return File(result.path);
-      } else {
-        print("Erro: A compressão retornou null.");
-        return null;
-      }
+      // Exibe uma mensagem de sucesso
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Colaborador atualizado com sucesso!')),
+      );
+ setState(() {
+      nomeController.clear();
+      cpfController.clear();
+      rgController.clear();
+      matriculaController.clear();
+      ctpsController.clear();
+      _dataNascimentoController.clear();
+      _dataAdmissaoController.clear();
+      cargaHorariaController.clear();
+      nisController.clear();
+      cargoController.clear();
+      _senhaController.clear();
+      _imagemSelecionada = null;
+      _imagemSelecionadaWeb = null;
+      _imagemBytes = null; // Limpa a imagem carregada da API
+      _isAdm = false;
+    });
+
+
+
     } catch (e) {
-      print("Erro ao comprimir a imagem: $e");
-      return null;
+      // Exibe uma mensagem de erro
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao atualizar colaborador: $e')),
+      );
     }
+    
+
   }
 
-  Future<void> _Atualizar() async {
-    const String url = 'http://localhost:3000/colaboradores';
-    print("Iniciando processo de atualizacao...");
-
-    if (nomeController.text.isEmpty ||
-        cpfController.text.isEmpty ||
-        rgController.text.isEmpty ||
-        _dataNascimentoController.text.isEmpty ||
-        _dataAdmissaoController.text.isEmpty ||
-        matriculaController.text.isEmpty ||
-        ctpsController.text.isEmpty ||
-        nisController.text.isEmpty ||
-        cargaHorariaController.text.isEmpty ||
-        cargoController.text.isEmpty ||
-        _senhaController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Todos os campos obrigatórios devem ser preenchidos.'),
-            duration: Duration(seconds: 2)),
-      );
-      return;
-    }
-
-    if (!kIsWeb && _imagemSelecionada == null ||
-        (kIsWeb && _imagemSelecionadaWeb == null)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Por favor, selecione uma imagem antes de cadastrar.'),
-            duration: Duration(seconds: 2)),
-      );
-      return;
-    }
-
-    int cargaHoraria = int.parse(cargaHorariaController.text);
-    var request = http.MultipartRequest('PUT', Uri.parse(url));
-
-    request.fields['Matricula'] = matriculaController.text;
-    request.fields['Nome'] = nomeController.text;
-    request.fields['CPF'] =
-        cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    request.fields['RG'] = rgController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    request.fields['DataNascimento'] =
-        _formatarDataParaISO(_dataNascimentoController.text);
-    request.fields['DataAdmissao'] =
-        _formatarDataParaISO(_dataAdmissaoController.text);
-    request.fields['NIS'] = nisController.text;
-    request.fields['CTPS'] = ctpsController.text;
-    request.fields['CargaHoraria'] = cargaHoraria.toString();
-    request.fields['Cargo'] = cargoController.text;
-    request.fields['CNPJ'] = widget.cnpj;
-    request.fields['Senha'] = _senhaController.text;
-    request.fields['IsAdm'] = _isAdm.toString();
-
-    if (!kIsWeb) {
-      File compressedImage = await compressImage(_imagemSelecionada!);
-      var imagemFile = await http.MultipartFile.fromPath(
-        'imagem',
-        compressedImage.path,
-        filename: 'imagem.jpg',
-        contentType: MediaType('image', 'jpeg'),
-      );
-      request.files.add(imagemFile);
-    } else {
-      var imagemBytes = http.MultipartFile.fromBytes(
-        'imagem',
-        _imagemSelecionadaWeb!,
-        filename: 'imagem.jpg',
-        contentType: MediaType('image', 'jpeg'),
-      );
-      request.files.add(imagemBytes);
-    }
-
-    try {
-      var response = await request.send();
-      var responseBody = await response.stream.bytesToString();
-      print("Resposta do servidor: $responseBody");
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Colaborador atualizado com sucesso!'),
-              duration: Duration(seconds: 2)),
-        );
-        nomeController.clear();
-        cpfController.clear();
-        rgController.clear();
-        matriculaController.clear();
-        ctpsController.clear();
-        _dataNascimentoController.clear();
-        _dataAdmissaoController.clear();
-        nisController.clear();
-        cargoController.clear();
-        setState(() {
-          _imagemSelecionada = null;
-          _imagemSelecionadaWeb = null;
-          _isAdm = false;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erro ao cadastrar: $responseBody'),
-              duration: Duration(seconds: 2)),
-        );
-      }
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Erro ao conectar com a API: $error'),
-            duration: Duration(seconds: 2)),
-      );
-    }
-  }
 
   Future<void> _selecionarData(
       BuildContext context, TextEditingController controller) async {
@@ -272,16 +189,10 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _carregarDadosColaborador(); // Busca os dados da empresa
-  }
-  Future<void> _carregarDadosColaborador() async {
+Future<void> _carregarDadosColaborador() async {
     try {
-      final colaboradorData =
-          await fetchColaborador(widget.cnpj, widget.matricula);
-
+        final colaboradorService = ColaboradorService('http://localhost:3000');
+     final colaboradorData = await colaboradorService.buscarColaborador(widget.cnpj, widget.matricula);
       setState(() {
         nomeController.text = colaboradorData['Nome'] ?? '';
         cpfController.text = colaboradorData['CPF'] ?? '';
@@ -323,28 +234,17 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
   }
 
 
-  Future<Map<String, dynamic>> fetchColaborador(
-      String cnpj, String matricula) async {
-    final url =
-        Uri.parse("http://localhost:3000/colaboradores/$cnpj/$matricula");
-    final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
 
-      // Verifique se a imagem está presente e é uma string base64
-      if (data['imagem'] != null && data['imagem'] is String) {
-        print(
-            "Imagem recebida da API: ${data['imagem'].substring(0, 50)}..."); // Log parcial da imagem
-      }
 
-      return data;
-    } else if (response.statusCode == 404) {
-      throw Exception('Colaborador não encontrado');
-    } else {
-      throw Exception('Erro ao buscar colaborador');
-    }
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDadosColaborador(); 
+      _colaboradorService = ColaboradorService('http://localhost:3000');// Busca os dados da empresa
   }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -847,8 +747,8 @@ class _AtualizarColaboradorpageState extends State<AtualizarColaboradorpage> {
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: ElevatedButton(
-                          onPressed: _Atualizar,
-                          style: ElevatedButton.styleFrom(
+                         onPressed: _updateColaborador,
+                        style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromARGB(255, 3, 33, 255),
                             padding: EdgeInsets.symmetric(

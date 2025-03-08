@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:reconhecimento/pages/MainPage.dart';
-import 'package:reconhecimento/pages/MainPageEmpresa.dart';
-
+import 'package:reconhecimento/service/colaboradorService.dart';
 import 'package:reconhecimento/pages/CadastroEmpresaPage.dart';
 import 'package:reconhecimento/pages/resetPage.dart';
-
+import 'package:reconhecimento/service/empresaService.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -15,6 +11,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  ColaboradorService colaboradorService = ColaboradorService('http://localhost:3000');
+  Empresaservice empresaservice = Empresaservice('http://localhost:3000');
   bool IsAdm = false;
   final TextEditingController senhaController = TextEditingController();
   final TextEditingController matriculaController = TextEditingController();
@@ -48,98 +46,6 @@ class _LoginPageState extends State<LoginPage> {
 
   }
 
-Future<void> loginColaborador(String login, String senha, BuildContext context) async {
-  final url = Uri.parse("http://localhost:3000/colaborador/login"); // Use o IP correto
-  final body = {'login': login, 'senha': senha};
-
-  print("Corpo da requisição de login (colaborador): ${jsonEncode(body)}"); // Log do corpo da requisição
-
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
-
-    print("Resposta do servidor (colaborador): ${response.statusCode}, ${response.body}"); // Log da resposta
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login efetuado com sucesso")),
-        );
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MainPage(isAdm: data['isAdm']),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'])),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erro no servidor")),
-      );
-    }
-  } catch (e) {
-    print("Erro durante a requisição (colaborador): $e"); // Log de erro
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Erro durante a requisição")),
-    );
-  }
-}
- Future<void> loginEmpresa(String cnpj, String senha, BuildContext context) async {
-  print("Função loginEmpresa chamada com CNPJ: $cnpj e Senha: $senha"); // Log de chamada da função
-
-  // Substitua pelo IP correto da sua máquina
-  final url = Uri.parse("http://localhost:3000/empresa/login");
-  final body = {'cnpj': cnpj, 'senha': senha};
-
-  print("Corpo da requisição de login (empresa): ${jsonEncode(body)}"); // Log do corpo da requisição
-
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
-
-    print("Resposta do servidor (empresa): ${response.statusCode}, ${response.body}"); // Log da resposta
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['success']) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Login efetuado com sucesso")),
-        );
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MainPageEmpresa(
-              isAdm: data['isAdm'],
-              cnpj: cnpj, // Passa o CNPJ para a MainPageEmpresa
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'])),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erro no servidor")),
-      );
-    }
-  } catch (e) {
-    print("Erro durante a requisição (empresa): $e"); // Log de erro
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Erro durante a requisição")),
-    );
-  }
-}
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -280,10 +186,10 @@ Future<void> loginColaborador(String login, String senha, BuildContext context) 
 
                       if (matricula.length == 14) {
                         // Login de empresa
-                        loginEmpresa(matricula, senha, context);
+                        empresaservice.loginEmpresa(matricula, senha, context);
                       } else {
                         // Login de colaborador
-                        loginColaborador(matricula, senha, context);
+                        colaboradorService.loginColaborador(matricula, senha, context);
                       }
                     },
                     style: ButtonStyle(

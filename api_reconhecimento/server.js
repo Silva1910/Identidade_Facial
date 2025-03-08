@@ -20,6 +20,55 @@ const upload = multer({ storage: multer.memoryStorage() });
 /**
  * Rota para buscar uma empresa pelo CNPJ
  */
+app.post('/colaboradores', upload.single('imagem'), async (req, res) => {
+  const {
+    Matricula,
+    Nome,
+    CPF,
+    RG,
+    DataNascimento,
+    DataAdmissao,
+    NIS,
+    CTPS,
+    CargaHoraria,
+    Cargo,
+    CNPJ,
+    Senha,
+    IsAdm,
+    login
+  } = req.body;
+
+  // Obtém o arquivo de imagem enviado
+  const imagem = req.file ? req.file.buffer : null;
+
+  try {
+    const novoColaborador = await prisma.colaborador.create({
+      data: {
+        Matricula,
+        Nome,
+        CPF,
+        RG,
+        DataNascimento: new Date(DataNascimento),
+        DataAdmissao: new Date(DataAdmissao),
+        NIS,
+        CTPS,
+        CargaHoraria: parseInt(CargaHoraria),
+        Cargo,
+        CNPJ,
+        imagem, // Salva o buffer da imagem como BLOB
+        Senha,
+        IsAdm: IsAdm === 'true',
+        login
+      }
+    });
+
+    res.status(201).json(novoColaborador);
+  } catch (error) {
+    console.error("Erro ao criar colaborador:", error);
+    res.status(400).json({ error: "Erro ao criar colaborador", details: error.message });
+  }
+});
+
 app.get('/empresa/get/:cnpj', async (req, res) => {
   const { cnpj } = req.params;
 
@@ -195,12 +244,9 @@ app.put('/colaboradores/:matricula/senha', async (req, res) => {
 });
 
 
-
-
-app.use(express.json());
-app.post('/colaboradores', upload.single('imagem'), async (req, res) => {
+app.put('/colaboradores/upload/:cnpj/:matricula', upload.single('imagem'), async (req, res) => {
+  const { matricula } = req.params; // Pega a matrícula da URL
   const {
-    Matricula,
     Nome,
     CPF,
     RG,
@@ -211,41 +257,39 @@ app.post('/colaboradores', upload.single('imagem'), async (req, res) => {
     CargaHoraria,
     Cargo,
     CNPJ,
-    Senha,
     IsAdm,
-    login
   } = req.body;
 
-  // Obtém o arquivo de imagem enviado
-  const imagem = req.file ? req.file.buffer : null;
+  // Obtém a imagem enviada (se houver)
+  const imagem = req.file ? req.file.buffer : undefined;
 
   try {
-    const novoColaborador = await prisma.colaborador.create({
+    // Atualiza apenas os campos fornecidos no corpo da requisição
+    const colaboradorAtualizado = await prisma.colaborador.update({
+      where: { Matricula: matricula },
       data: {
-        Matricula,
-        Nome,
-        CPF,
-        RG,
-        DataNascimento: new Date(DataNascimento),
-        DataAdmissao: new Date(DataAdmissao),
-        NIS,
-        CTPS,
-        CargaHoraria: parseInt(CargaHoraria),
-        Cargo,
-        CNPJ,
-        imagem, // Salva o buffer da imagem como BLOB
-        Senha,
-        IsAdm: IsAdm === 'true',
-        login
+        Nome: Nome !== undefined ? Nome : undefined,
+        CPF: CPF !== undefined ? CPF : undefined,
+        RG: RG !== undefined ? RG : undefined,
+        DataNascimento: DataNascimento !== undefined ? new Date(DataNascimento) : undefined,
+        DataAdmissao: DataAdmissao !== undefined ? new Date(DataAdmissao) : undefined,
+        NIS: NIS !== undefined ? NIS : undefined,
+        CTPS: CTPS !== undefined ? CTPS : undefined,
+        CargaHoraria: CargaHoraria !== undefined ? parseInt(CargaHoraria) : undefined,
+        Cargo: Cargo !== undefined ? Cargo : undefined,
+        CNPJ: CNPJ !== undefined ? CNPJ : undefined,
+        imagem: imagem !== undefined ? imagem : undefined, // Atualiza a imagem apenas se for enviada
+        IsAdm: IsAdm !== undefined ? IsAdm === 'true' : undefined,
       }
     });
 
-    res.status(201).json(novoColaborador);
+    res.status(200).json(colaboradorAtualizado);
   } catch (error) {
-    console.error("Erro ao criar colaborador:", error);
-    res.status(400).json({ error: "Erro ao criar colaborador", details: error.message });
+    console.error('Erro ao atualizar colaborador:', error);
+    res.status(500).json({ error: 'Erro ao atualizar colaborador', details: error.message });
   }
 });
+
 /**
  * Rota para registrar ponto
  */
@@ -274,7 +318,7 @@ app.post('/registroPonto', async (req, res) => {
 
 /**
  * Rota para atualizar um colaborador
- */app.put('/colaboradores/:matricula', upload.single('imagem'), async (req, res) => {
+ */app.put('/colaboradores/upload/:cnpj/:matricula', upload.single('imagem'), async (req, res) => {
   const { matricula } = req.params; // Pega a matrícula da URL
   const {
     Nome,
@@ -287,9 +331,7 @@ app.post('/registroPonto', async (req, res) => {
     CargaHoraria,
     Cargo,
     CNPJ,
-    Senha,
     IsAdm,
-    login
   } = req.body;
 
   // Obtém a imagem enviada
