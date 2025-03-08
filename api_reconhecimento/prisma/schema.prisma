@@ -6,5 +6,71 @@ generator client {
 // O Prisma usará a variável de ambiente DATABASE_URL para conectar ao MySQL
 datasource db {
   provider = "mysql"  // Define que o banco de dados usado será MySQL
-  url      = env("DATABASE_URL")  // Usa a variável de ambiente DATABASE_URL para a conexão
+  url      = "mysql://root:Pet&253042@localhost:3306/Registro_Database"  // Usa a variável de ambiente DATABASE_URL para a conexão
+}
+
+// Definição do modelo de dados
+// Define a estrutura da tabela que será criada no banco de dados
+
+model EMPRESA {
+  CNPJ         String   @id @unique @db.Char(14)
+  NOMEFANTASIA String   @db.VarChar(35)
+  CEP          Int      @db.Int
+  UF           String   @db.Char(2)
+  CIDADE       String   @db.VarChar(35)
+  BAIRRO       String   @db.VarChar(35)
+  LOGRADOURO   String   @db.VarChar(100)
+  NUMERO       Int      @db.Int
+  COMPLEMENTO  String?  @db.VarChar(50)
+  DATACRIACAO  DateTime @db.Date
+
+  COLABORADORES COLABORADOR[] @relation(name: "EmpresaToColaboradores")
+  USUARIOS      USUARIO[] @relation(name: "EmpresaToUsuarios")
+
+}
+
+model COLABORADOR {
+  MATRICULA       String   @unique @db.VarChar(36)
+  CNPJ_EMPRESA    String   @unique @db.Char(14)
+  NOME            String   @db.VarChar(100)
+  CPF             String   @db.Char(11)
+  RG              String   @db.Char(9)
+  DATA_NASCIMENTO DateTime @db.Date
+  DATA_ADMISSAO   DateTime @db.Date
+  NIS             String   @db.Char(11)
+  CTPS            String   @db.Char(11)
+  CARGA_HORARIA   DateTime @db.Time
+  CARGO           String   @db.VarChar(40)
+  IMAGEM          Bytes?
+  BANCO_DE_HORAS  DateTime @db.Time
+
+  EMPRESA         EMPRESA  @relation(name: "EmpresaToColaboradores", fields: [CNPJ_EMPRESA], references: [CNPJ], onUpdate: Cascade, onDelete: Restrict)
+
+  USUARIO         USUARIO? @relation(name: "ColaboradorToUsuario")
+  REGISTROS_PONTO REGISTRO_PONTO[] @relation(name: "ColaboradorToRegistrosPonto")
+
+  @@id([MATRICULA, CNPJ_EMPRESA])
+}
+
+model USUARIO {
+  MATRICULA_COLABORADOR String  @unique @db.VarChar(36)
+  CNPJ_EMPRESA          String  @unique @db.Char(14)
+  SENHA                 String  @db.VarChar(100)
+  ADMIN                 Boolean
+
+  empresa               EMPRESA     @relation(name: "EmpresaToUsuarios", fields: [CNPJ_EMPRESA], references: [CNPJ], onUpdate: Cascade, onDelete: Restrict)
+
+  COLABORADOR           COLABORADOR @relation(name: "ColaboradorToUsuario", fields: [MATRICULA_COLABORADOR, CNPJ_EMPRESA], references: [MATRICULA, CNPJ_EMPRESA], onUpdate: Cascade, onDelete: Restrict)
+
+  @@id([MATRICULA_COLABORADOR, CNPJ_EMPRESA])
+}
+
+model REGISTRO_PONTO {
+  MATRICULA_COLABORADOR String   @unique @db.VarChar(36)
+  CNPJ_EMPRESA          String   @unique @db.Char(14)
+  DATA                  DateTime @unique @db.DateTime
+
+  COLABORADOR           COLABORADOR @relation(name: "ColaboradorToRegistrosPonto", fields: [MATRICULA_COLABORADOR, CNPJ_EMPRESA], references: [MATRICULA, CNPJ_EMPRESA], onUpdate: Cascade, onDelete: Restrict)
+
+  @@id([MATRICULA_COLABORADOR, CNPJ_EMPRESA, DATA])
 }
