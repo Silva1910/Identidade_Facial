@@ -4,8 +4,6 @@ generator client {
 
 // Configuração do banco de dados
 // O Prisma usará a variável de ambiente DATABASE_URL para conectar ao MySQL
-// Exemplo de DATABASE_URL no .env: mysql://root:senhaAqui@localhost:3306/dbname
-
 datasource db {
   provider = "mysql"  // Define que o banco de dados usado será MySQL
   url      = env("DATABASE_URL")  // Usa a variável de ambiente DATABASE_URL para a conexão
